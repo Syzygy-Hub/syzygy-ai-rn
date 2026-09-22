@@ -7,11 +7,14 @@
 
 # syzygy-ai-rn
 
-AI layer contracts for the Syzygy React Native ecosystem — providing LLMProvider, AgentProtocol, RAGProvider, MemoryManager, and StreamHandler interfaces.
+AI layer contracts for the Syzygy React Native ecosystem — providing LLMProvider, AgentProtocol, EmbeddingProvider, RAGProvider, and MemoryManager interfaces.
 
 ## About
 
-syzygy-ai-rn defines the AI integration contracts that sit on top of the Syzygy Foundation layer. It provides abstract interfaces for LLM backends, agentic ReAct loops, retrieval-augmented generation, conversation memory management, and token streaming. Nothing in this layer has concrete behaviour — swap any AI provider by conforming to these contracts.
+syzygy-ai-rn defines the AI integration contracts that sit on top of the Syzygy Foundation layer. It provides abstract interfaces for LLM backends, agentic ReAct loops, retrieval-augmented generation, text embeddings, and conversation memory management. Nothing in this layer has concrete behaviour — swap any AI provider by conforming to these contracts.
+
+> **v1.0.0 — Pure Contracts Only**
+> This release contains TypeScript interfaces and type definitions only. No concrete implementations are included. Implementations targeting specific LLM backends, vector stores, or memory systems should depend on this package and provide their own conforming types.
 
 ## Role in the Syzygy Ecosystem
 
@@ -27,7 +30,11 @@ Full ecosystem architecture: [ecosystem-fragment.md](https://github.com/Syzygy-H
 | `AgentProtocol` | ReAct loop contract (Reason → Act → Observe) |
 | `RAGProvider` | Retrieval-augmented generation interface |
 | `MemoryManager` | Conversation context management contract |
-| `StreamHandler` | Token streaming abstraction |
+| `EmbeddingProvider` | Abstract interface for generating text embeddings |
+
+## Known Limitations (v1.0.0)
+
+- `MemoryEntry.timestamp` and `ConversationTurn.timestamp` use `number` (Unix milliseconds via `Date.now()`) instead of a `SyzygyTimestamp` type. There is no equivalent of `SyzygyTimestamp` in TypeScript/JavaScript. This is intentional for v1.0.0.
 
 ## Release Process
 
