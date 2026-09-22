@@ -1,1 +1,16 @@
-// AI contracts — export from here
+export type { LLMProvider } from './contracts/llm/LLMProvider';
+export type { LLMMessage, LLMRequest, MessageRole } from './contracts/llm/LLMRequest';
+export type { FinishReason, LLMResponse, TokenUsage } from './contracts/llm/LLMResponse';
+export type { LLMChunk } from './contracts/llm/LLMChunk';
+export type { AgentProtocol } from './contracts/agent/AgentProtocol';
+export type { AgentRequest } from './contracts/agent/AgentRequest';
+export type { AgentTool, ToolInput, ToolResult, ToolSchema } from './contracts/agent/AgentTool';
+export type { AgentStep } from './contracts/agent/AgentStep';
+export type { AgentResult } from './contracts/agent/AgentResult';
+export type { EmbeddingProvider } from './contracts/embeddings/EmbeddingProvider';
+export type { Embedding } from './contracts/embeddings/Embedding';
+export type { RAGOptions, RAGProvider } from './contracts/rag/RAGProvider';
+export type { RAGChunk } from './contracts/rag/RAGChunk';
+export type { MemoryManager } from './contracts/memory/MemoryManager';
+export type { MemoryEntry } from './contracts/memory/MemoryEntry';
+export type { ConversationTurn, TurnRole } from './contracts/memory/ConversationTurn';
