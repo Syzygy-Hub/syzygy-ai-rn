@@ -4,7 +4,7 @@ export type { FinishReason, LLMResponse, TokenUsage } from './contracts/llm/LLMR
 export type { LLMChunk } from './contracts/llm/LLMChunk';
 export type { ToolCallRequest } from './contracts/llm/ToolCallRequest';
 export type { ToolCallResult } from './contracts/llm/ToolCallResult';
-export type { StreamContract } from './contracts/llm/StreamContract';
+export type { ChunkPhase, FinalPhase, StreamPhase } from './contracts/llm/StreamContract';
 export type { AgentProtocol } from './contracts/agent/AgentProtocol';
 export type { AgentRequest } from './contracts/agent/AgentRequest';
 export type { AgentTool, ToolInput, ToolResult, ToolSchema } from './contracts/agent/AgentTool';

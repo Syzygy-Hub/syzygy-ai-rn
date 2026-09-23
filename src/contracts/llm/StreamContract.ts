@@ -22,13 +22,11 @@
  *   - Chunks MUST be delivered in the order they were emitted by the underlying model.
  *   - Providers MUST NOT reorder or buffer-then-reorder chunks.
  */
-export namespace StreamContract {
-  /** Marker type: a value emitted during the CHUNK phase. */
-  export type ChunkPhase = 'chunk';
+/** Marker type: a value emitted during the CHUNK phase. */
+export type ChunkPhase = 'chunk';
 
-  /** Marker type: a value emitted during the FINAL phase. */
-  export type FinalPhase = 'final';
+/** Marker type: a value emitted during the FINAL phase. */
+export type FinalPhase = 'final';
 
-  /** Union of valid stream phases after OPEN. */
-  export type Phase = ChunkPhase | FinalPhase;
-}
+/** Union of valid stream phases after OPEN. */
+export type StreamPhase = ChunkPhase | FinalPhase;

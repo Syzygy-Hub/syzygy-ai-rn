@@ -128,8 +128,8 @@ const _turn: ConversationTurn = {
 
 type _MemoryManagerShape = Pick<NamespacedMemoryManager, 'delete' | 'clear'>;
 const _mmShape: _MemoryManagerShape = {
-  delete: async (_id: string, _ns: string) => {},
-  clear: async (_ns?: string) => {},
+  delete: async (id: string, ns: string) => { void id; void ns; },
+  clear: async (ns?: string) => { void ns; },
 };
 
 // ── Runtime smoke test ─────────────────────────────────────────────────────
@@ -151,6 +151,10 @@ describe('contractParity', () => {
     expect(_jsonBool).toBe(true);
     expect(_jsonNum).toBe(42);
     expect(_jsonStr).toBe('hello');
+    expect(Array.isArray(_jsonArr)).toBe(true);
+    expect(typeof _jsonObj).toBe('object');
+    expect(typeof _jsonObject).toBe('object');
+    expect(Array.isArray(_jsonArray)).toBe(true);
   });
 
   it('RAGChunk has id field', () => {
@@ -165,6 +169,14 @@ describe('contractParity', () => {
 
   it('ConversationTurn has timestampMs bridge field', () => {
     expect(_turn.timestampMs).toBeDefined();
+  });
+
+  it('MessageRole includes tool value', () => {
+    expect(_role).toBe('tool');
+  });
+
+  it('RAGOptions accepts scoreThreshold', () => {
+    expect(_ragOpts.scoreThreshold).toBe(0.7);
   });
 
   it('LLMRequest has requestId and correlationId', () => {
