@@ -5,4 +5,6 @@ export interface LLMChunk {
   toolCallDelta?: string;
   finishReason?: FinishReason;
   metadata?: Record<string, string>;
+  providerName?: string;
+  modelName?: string;
 }

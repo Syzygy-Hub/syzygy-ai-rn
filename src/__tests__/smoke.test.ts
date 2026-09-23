@@ -17,7 +17,7 @@ describe('SyzygyAI Contract Smoke Tests', () => {
   });
 
   it('RAGChunk has score', () => {
-    const chunk: RAGChunk = { content: 'test', score: 0.9 };
+    const chunk: RAGChunk = { id: 'c1', content: 'test', score: 0.9 };
     expect(chunk.score).toBe(0.9);
   });
 

@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Fetch lint config
         run: |
@@ -25,10 +25,16 @@ jobs:
             -o .prettierrc
 
       - name: Install
-        run: npm install
+        run: npm ci
 
       - name: Lint
         run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npx tsc
 
       - name: Test with coverage
         run: npm test -- --coverage --coverageReporters=text-summary 2>&1 | tee /tmp/jest-output.txt

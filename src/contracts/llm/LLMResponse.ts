@@ -10,4 +10,6 @@ export interface LLMResponse {
   content: string;
   tokenUsage?: TokenUsage;
   finishReason?: FinishReason;
+  providerName?: string;
+  modelName?: string;
 }
