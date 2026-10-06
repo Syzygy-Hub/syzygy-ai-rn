@@ -1,4 +1,4 @@
-[![React Native](https://img.shields.io/badge/React%20Native-TypeScript-7F77DD?style=flat)](https://reactnative.dev/) [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-1D9E75?logo=typescript&logoColor=white&style=flat)](https://typescriptlang.org) [![CI](https://img.shields.io/github/actions/workflow/status/Syzygy-Hub/syzygy-ai-rn/ci.yml?label=ci&style=flat)](https://github.com/Syzygy-Hub/syzygy-ai-rn/actions/workflows/ci.yml) [![Version](https://img.shields.io/badge/version-1.1.0-D85A30?style=flat)](https://github.com/Syzygy-Hub/syzygy-ai-rn/releases) [![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
+[![React Native](https://img.shields.io/badge/React%20Native-TypeScript-7F77DD?style=flat)](https://reactnative.dev/) [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-1D9E75?logo=typescript&logoColor=white&style=flat)](https://typescriptlang.org) [![CI](https://img.shields.io/github/actions/workflow/status/Syzygy-Hub/syzygy-ai-rn/ci.yml?label=ci&style=flat)](https://github.com/Syzygy-Hub/syzygy-ai-rn/actions/workflows/ci.yml) [![Version](https://img.shields.io/badge/version-3.0.0-D85A30?style=flat)](https://github.com/Syzygy-Hub/syzygy-ai-rn/releases) [![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Syzygy-Hub/.github/main/brand/assets/banners/syzygy-banner-dark-1200.png">
@@ -13,10 +13,8 @@ AI layer contracts for the Syzygy React Native ecosystem — providing LLMProvid
 
 syzygy-ai-rn defines the AI integration contracts that sit on top of the Syzygy Foundation layer. It provides abstract interfaces for LLM backends, agentic ReAct loops, retrieval-augmented generation, text embeddings, and conversation memory management. Nothing in this layer has concrete behaviour — swap any AI provider by conforming to these contracts.
 
-> **v1.1.0 — Structured Tool Calling, Typed Errors, and Contract Hardening**
-> This release adds `ToolCallRequest`/`ToolCallResult`, a typed `AIError` hierarchy, `JSONValue` shared model, operational metadata fields, RAG/memory contract improvements, and a contract parity test suite. No concrete implementations are included — swap any AI provider by conforming to these contracts.
-
-> **Deprecation notice:** `MemoryEntry.timestamp` and `ConversationTurn.timestamp` (`number`) are deprecated as of v1.1.0. Use `timestampMs` (the v1.1.0 bridge field) now. Both will be replaced by `SyzygyTimestamp` from `syzygy-foundation-rn` in v2.0.
+> **v3.0.0 — Contract Alignment with Foundation 3.0.0**
+> This release moves memory timestamps to `SyzygyTimestamp`, moves RAG result limiting to `RAGOptions.maxResults`, consolidates tool calling on a single `ToolCall` contract, and gives `NamespacedMemoryManager` distinct method names. No concrete implementations are included — swap any AI provider by conforming to these contracts.
 
 ## Role in the Syzygy Ecosystem
 
@@ -34,24 +32,55 @@ Full ecosystem architecture: [ecosystem-fragment.md](https://github.com/Syzygy-H
 | `MemoryManager` | Conversation context management contract |
 | `EmbeddingProvider` | Abstract interface for generating text embeddings |
 
+## What's New in v3.0.0
+
+- **Breaking:** requires `syzygy-foundation-rn` `>=3.0.0`.
+- **Breaking:** `NamespacedMemoryManager` uses distinct method names (`addToNamespace`, `retrieveFromNamespace`, `deleteEntry`, `clearNamespace`) instead of overloads, matching the Flutter contract.
+- **Breaking:** `RAGProvider.retrieve(query, options?)` no longer takes a positional result-count parameter. Use `RAGOptions.maxResults` (default `DEFAULT_MAX_RESULTS` = 10, values < 1 clamped to 1 via `resolveMaxResults()`).
+- **Breaking:** `MemoryEntry.timestamp` and `ConversationTurn.timestamp` are now `SyzygyTimestamp` (from `syzygy-foundation-rn`) instead of `number`; the former millisecond bridge field is removed.
+- **Breaking:** tool calling is consolidated on a single `ToolCall` contract (`id`, `name`, `arguments: JSONObject`); the former separate request type is removed and `LLMMessage.toolCalls` is `ToolCall[]`.
+- `LLMRequest.tools?: AgentTool[]` and `LLMResponse.toolCalls?: ToolCall[]` enable tool calling at the LLM layer.
+- `DEFAULT_MAX_STEPS` and `resolveMaxSteps()` helper for `AgentRequest.maxSteps` (default 10, values < 1 clamped to 1).
+
 ## What's New in v1.1.0
 
-- **Structured Tool Calling** — `ToolCallRequest` and `ToolCallResult` contracts; `LLMMessage` now carries `toolCalls` and `toolCallResult`; `MessageRole` gains `'tool'`.
+- **Structured Tool Calling** — `ToolCall` and `ToolCallResult` contracts; `LLMMessage` now carries `toolCalls` and `toolCallResult`; `MessageRole` gains `'tool'`.
 - **Typed Error Model** — `AIError` class with `AIErrorCode` union (`authentication_failure`, `rate_limited`, `network_error`, `invalid_request`, `provider_failure`, `cancelled`).
-- **Shared JSON Value Model** — `JSONValue`, `JSONObject`, `JSONArray` replace `Record<string, unknown>` in tool contracts.
+- **Shared JSON Value Model** — `JSONValue`, `JSONObject`, `JSONArray`; used by `ToolCall.arguments`. (`AgentTool`/`AgentStep` still use `Record<string, unknown>`.)
 - **Operational Metadata** — `requestId`/`correlationId` on `LLMRequest`; `providerName`/`modelName` on `LLMResponse` and `LLMChunk`.
 - **Stream Semantics** — `StreamContract` namespace documents the stream lifecycle (OPEN → CHUNK → FINAL → CLOSED).
-- **RAG improvements** — `RAGChunk` gains optional `id?`, `source`, `documentId`; `RAGOptions` gains `maxResults`.
-- **Memory improvements** — new `NamespacedMemoryManager` interface extends `MemoryManager` with namespaced `add`/`retrieve`/`delete`/`clear`; `timestampMs` bridge field added to `MemoryEntry` and `ConversationTurn`.
+- **RAG improvements** — `RAGChunk` gains optional `id?`, `source`, `documentId`.
+- **Memory improvements** — new `NamespacedMemoryManager` interface extends `MemoryManager` with `addToNamespace`/`retrieveFromNamespace`/`deleteEntry`/`clearNamespace`; `MemoryEntry` and `ConversationTurn` gained a millisecond bridge field (removed in v3.0.0, see above).
 
-> **NamespacedMemoryManager — platform idiom note:** On iOS, Android, and React Native, `NamespacedMemoryManager` uses the same base verb names (`add`, `retrieve`, `delete`, `clear`) overloaded with a `namespace` parameter. The Flutter peer library (`syzygy-ai-flutter`) instead exposes distinct method names (`addToNamespace`, `retrieveFromNamespace`, `deleteEntry`, `clearNamespace`) because Dart does not support method overloading. This divergence is intentional — each platform follows its own language idiom rather than forcing an artificial common naming.
 - **Contract parity tests** — `contractParity.test.ts` compile-checks all contract shapes.
-- **CI hardening** — `npm ci`, `npx tsc --noEmit` typecheck, and `npx tsc` build steps in both `ci.yml` and `release.yml`.
 
-## Deprecations (v1.1.0)
 
-- `MemoryEntry.timestamp` (`number`) is deprecated. Use `timestampMs` (bridge field, same value) now; both will be replaced by `SyzygyTimestamp` from `syzygy-foundation-rn` in v2.0.
-- `ConversationTurn.timestamp` (`number`) is deprecated. Same replacement path as above.
+### RAG
+
+```typescript
+const chunks = await rag.retrieve('how do I reset my password?', {
+  maxResults: 5,        // default 10
+  scoreThreshold: 0.7,
+})
+```
+
+### Tool calling
+
+```typescript
+const response = await llm.complete({ messages, model, tools: [searchTool] })
+for (const call of response.toolCalls ?? []) {
+  // call.id, call.name, call.arguments
+}
+```
+
+### Timestamps
+
+```typescript
+import { SyzygyTimestamp, createSyzygyTimestamp } from 'syzygy-foundation-rn'
+
+const entry: MemoryEntry = { id: '1', content: 'fact', type: 'fact', timestamp: SyzygyTimestamp.now() }
+const fixed = createSyzygyTimestamp(1_700_000_000_000)
+```
 
 ## Release Process
 
@@ -76,6 +105,7 @@ For the full release standard see the [Syzygy-Hub/.github release standard](http
 - React Native 0.71+
 - TypeScript 5+
 - Node.js 20+
+- syzygy-foundation-rn 3.0.0+
 
 ## Installation
 

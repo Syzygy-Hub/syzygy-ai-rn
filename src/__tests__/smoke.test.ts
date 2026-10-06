@@ -1,3 +1,4 @@
+import { SyzygyTimestamp } from 'syzygy-foundation-rn';
 import type { LLMRequest, LLMMessage } from '../contracts/llm/LLMRequest';
 import type { Embedding } from '../contracts/embeddings/Embedding';
 import type { RAGChunk } from '../contracts/rag/RAGChunk';
@@ -30,7 +31,7 @@ describe('SyzygyAI Contract Smoke Tests', () => {
     const entry: MemoryEntry = {
       id: '1',
       content: 'fact',
-      timestamp: Date.now(),
+      timestamp: SyzygyTimestamp.now(),
       type: 'fact',
     };
     expect(entry.type).toBe('fact');
