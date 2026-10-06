@@ -1,3 +1,5 @@
+import type { ToolCall } from './ToolCall';
+
 export interface TokenUsage {
   promptTokens: number;
   completionTokens: number;
@@ -12,4 +14,6 @@ export interface LLMResponse {
   finishReason?: FinishReason;
   providerName?: string;
   modelName?: string;
+  /** Tool calls requested by the model. Absent when the model requested none. */
+  toolCalls?: ToolCall[];
 }

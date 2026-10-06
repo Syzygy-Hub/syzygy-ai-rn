@@ -1,13 +1,15 @@
 /**
  * contractParity.test.ts
  *
- * Compile-time shape checks for all v1.1.0 contracts.
+ * Compile-time shape checks for all contracts.
  * These tests use type-assignment patterns so that TypeScript itself
  * is the assertion engine — a type error here means a contract is broken.
  */
 
 import type { JSONValue, JSONObject, JSONArray } from '../types/JSONValue';
-import type { ToolCallRequest } from '../contracts/llm/ToolCallRequest';
+import { SyzygyTimestamp, createSyzygyTimestamp } from 'syzygy-foundation-rn';
+import type { AgentTool } from '../contracts/agent/AgentTool';
+import type { ToolCall } from '../contracts/llm/ToolCall';
 import type { ToolCallResult } from '../contracts/llm/ToolCallResult';
 import type { LLMMessage, LLMRequest, MessageRole } from '../contracts/llm/LLMRequest';
 import type { LLMResponse, TokenUsage, FinishReason } from '../contracts/llm/LLMResponse';
@@ -31,9 +33,9 @@ const _jsonObj: JSONValue = { a: 1, b: 'x' };
 const _jsonObject: JSONObject = { key: 'value' };
 const _jsonArray: JSONArray = [1, 2, 3];
 
-// ── ToolCallRequest ────────────────────────────────────────────────────────
+// ── ToolCall ───────────────────────────────────────────────────────────────
 
-const _toolCallReq: ToolCallRequest = {
+const _toolCallReq: ToolCall = {
   id: 'tc-1',
   name: 'search',
   arguments: { query: 'hello' },
@@ -110,8 +112,7 @@ const _ragOpts: RAGOptions = {
 const _entry: MemoryEntry = {
   id: 'mem-1',
   content: 'user said hello',
-  timestamp: Date.now(),
-  timestampMs: Date.now(),
+  timestamp: createSyzygyTimestamp(1_700_000_000_000),
   type: 'conversation',
 };
 
@@ -120,16 +121,44 @@ const _entry: MemoryEntry = {
 const _turn: ConversationTurn = {
   role: 'user',
   content: 'hello',
-  timestamp: Date.now(),
-  timestampMs: Date.now(),
+  timestamp: SyzygyTimestamp.now(),
 };
 
 // ── MemoryManager (structural check) ──────────────────────────────────────
 
-type _MemoryManagerShape = Pick<NamespacedMemoryManager, 'delete' | 'clear'>;
+type _MemoryManagerShape = Pick<
+  NamespacedMemoryManager,
+  | 'addToNamespace'
+  | 'retrieveFromNamespace'
+  | 'deleteEntry'
+  | 'clearNamespace'
+  | 'retrieve'
+  | 'clear'
+>;
 const _mmShape: _MemoryManagerShape = {
-  delete: async (id: string, ns: string) => { void id; void ns; },
-  clear: async (ns?: string) => { void ns; },
+  addToNamespace: async (e: MemoryEntry, ns: string) => {
+    void e;
+    void ns;
+  },
+  retrieveFromNamespace: async (q: string, ns: string, limit?: number) => {
+    void q;
+    void ns;
+    void limit;
+    return [];
+  },
+  deleteEntry: async (id: string, ns: string) => {
+    void id;
+    void ns;
+  },
+  clearNamespace: async (ns: string) => {
+    void ns;
+  },
+  retrieve: async (q: string, limit: number) => {
+    void q;
+    void limit;
+    return [];
+  },
+  clear: async () => undefined,
 };
 
 // ── Runtime smoke test ─────────────────────────────────────────────────────
@@ -163,12 +192,51 @@ describe('contractParity', () => {
     expect(_ragChunk.documentId).toBe('doc-1');
   });
 
-  it('MemoryEntry has timestampMs bridge field', () => {
-    expect(_entry.timestampMs).toBeDefined();
+  it('MemoryEntry.timestamp is a SyzygyTimestamp', () => {
+    expect(_entry.timestamp.millisecondsSinceEpoch).toBe(1_700_000_000_000);
+    expect(_entry.timestamp.secondsSinceEpoch).toBe(1_700_000_000);
+    expect(_entry.timestamp.toDate()).toBeInstanceOf(Date);
   });
 
-  it('ConversationTurn has timestampMs bridge field', () => {
-    expect(_turn.timestampMs).toBeDefined();
+  it('ConversationTurn.timestamp is a SyzygyTimestamp', () => {
+    expect(typeof _turn.timestamp.millisecondsSinceEpoch).toBe('number');
+    expect(_turn.timestamp.toDate()).toBeInstanceOf(Date);
+  });
+
+  it('ToolCall can be constructed', () => {
+    const call: ToolCall = { id: 'tc-9', name: 'search', arguments: { q: 'x', n: 2 } };
+    expect(call.id).toBe('tc-9');
+    expect(call.name).toBe('search');
+    expect(call.arguments).toEqual({ q: 'x', n: 2 });
+  });
+
+  it('LLMRequest accepts tools', () => {
+    const tool: AgentTool = {
+      name: 'search',
+      description: 'Search',
+      inputSchema: { type: 'object' },
+      execute: async () => ({ output: 'ok' }),
+    };
+    const req: LLMRequest = { messages: [], model: 'm', tools: [tool] };
+    expect(req.tools).toHaveLength(1);
+  });
+
+  it('LLMRequest without tools leaves tools undefined', () => {
+    const req: LLMRequest = { messages: [], model: 'm' };
+    expect(req.tools).toBeUndefined();
+  });
+
+  it('LLMResponse accepts toolCalls', () => {
+    const res: LLMResponse = {
+      content: '',
+      finishReason: 'tool_call',
+      toolCalls: [{ id: 'tc-1', name: 'search', arguments: {} }],
+    };
+    expect(res.toolCalls?.[0].name).toBe('search');
+  });
+
+  it('LLMResponse without toolCalls leaves toolCalls undefined', () => {
+    expect(_res.toolCalls).toBeUndefined();
   });
 
   it('MessageRole includes tool value', () => {
@@ -194,8 +262,12 @@ describe('contractParity', () => {
     expect(_chunk.modelName).toBe('gpt-4');
   });
 
-  it('MemoryManager shape has delete and clear', () => {
-    expect(typeof _mmShape.delete).toBe('function');
+  it('NamespacedMemoryManager shape has distinct namespaced methods', () => {
+    expect(typeof _mmShape.addToNamespace).toBe('function');
+    expect(typeof _mmShape.retrieveFromNamespace).toBe('function');
+    expect(typeof _mmShape.deleteEntry).toBe('function');
+    expect(typeof _mmShape.clearNamespace).toBe('function');
+    expect(typeof _mmShape.retrieve).toBe('function');
     expect(typeof _mmShape.clear).toBe('function');
   });
 });
